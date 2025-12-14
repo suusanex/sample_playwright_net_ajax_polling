@@ -1,0 +1,2 @@
+# sample_playwright_net_ajax_polling
+単純なAjax＆ポーリングを行うようなASP.NET MVCでPlayWright.NETの組み込み方を試すサンプル
