@@ -23,7 +23,7 @@
 - [x] T004 [P] Initialize .PlaywrightTests project with Playwright, NUnit dependencies  
 - [x] T005 [P] Initialize .JsTests project: `package.json`, Jest config, jsdom setup
 - [x] T006 [P] Create `appsettings.json` configuration schema in `src/MessageStreamApp/appsettings.json` with MessageStream section
-- [ ] T007 [P] Create `.gitignore` and `README.md` at repository root
+- [x] T007 [P] Create `.gitignore` and `README.md` at repository root
 
 ---
 
@@ -75,7 +75,7 @@
 - [x] T031 Add error handling and logging in `MessagesController.cs` for null buffer, serialization failures
 - [x] T032 Add ILogger injection and logging in `MessageGeneratorService.cs` for message generation events
 - [x] T033 Add request logging in `Program.cs` middleware setup for debugging API calls
-- [ ] T034 [P] Add console.log debug statements in `wwwroot/app.js` for fetch events, message parsing (optional - for development)
+- [x] T034 [P] Add console.log debug statements in `wwwroot/app.js` for fetch events, message parsing (optional - for development)
 - [x] T035 Run IntegrationTests: `dotnet test tests/MessageStreamApp.IntegrationTests` - all tests should PASS
 - [x] T036 Run PlaywrightTests: `dotnet test tests/MessageStreamApp.PlaywrightTests` with short intervals (10ms generation, 50ms fetch, 5s timeout) - all tests should PASS
 - [x] T037 Run JsTests: `cd tests/MessageStreamApp.JsTests && npm test` - all tests should PASS
@@ -92,24 +92,24 @@
 
 ### Tests for User Story 2
 
-- [ ] T038 [P] [US2] Contract test polling mode: multiple poll calls return correct messages in `tests/MessageStreamApp.IntegrationTests/PollingApiTests.cs` (verify 2nd call gets new messages, buffer empties)
-- [ ] T039 [P] [US2] Contract test streaming mode: 2nd batch of messages delivered after ClientFetchIntervalMs in `tests/MessageStreamApp.IntegrationTests/StreamingApiTests.cs`
-- [ ] T040 [P] [US2] E2E test mode switching: verify polling.json vs streaming.json config changes behavior in `tests/MessageStreamApp.PlaywrightTests/ConfigSwitchingE2ETests.cs`
+- [x] T038 [P] [US2] Contract test polling mode: multiple poll calls return correct messages in `tests/MessageStreamApp.IntegrationTests/PollingApiTests.cs` (verify 2nd call gets new messages, buffer empties)
+- [x] T039 [P] [US2] Contract test streaming mode: 2nd batch of messages delivered after ClientFetchIntervalMs in `tests/MessageStreamApp.IntegrationTests/StreamingApiTests.cs`
+- [x] T040 [P] [US2] E2E test mode switching: verify polling.json vs streaming.json config changes behavior in `tests/MessageStreamApp.PlaywrightTests/ConfigSwitchingE2ETests.cs`
 
 ### Implementation for User Story 2
 
 - [ ] T041 [P] Create appsettings.Polling.json in `src/MessageStreamApp/appsettings.Polling.json` with Mode="Polling" configuration
 - [ ] T041 [P] Create appsettings.Streaming.json in `src/MessageStreamApp/appsettings.Streaming.json` with Mode="Streaming" configuration
-- [ ] T042 Add validation in `Program.cs` for StreamConfiguration (MessageGenerationIntervalMs 10-10000, ClientFetchIntervalMs 100-30000, BufferCapacity 10-1000)
-- [ ] T043 Update `MessagesController.Stream` to handle mode-aware timing: ClientFetchIntervalMs for batch writes, MessageGenerationIntervalMs for empty buffer wait
-- [ ] T044 Verify `wwwroot/app.js` config mode handling works correctly: /api/config mode value routes to correct transport (startPolling vs startStreaming)
-- [ ] T045 Add test data setup in integration test base class: WebApplicationFactory.WithWebHostBuilder overrides with short intervals (10ms generation, 50ms fetch)
-- [ ] T046 Add WebDriverWait equivalent in Playwright tests: increase timeout to 5s for polling mode (slower than streaming)
-- [ ] T047 [P] Update integration tests to verify 2+ consecutive poll calls work correctly (buffer resets, new messages added)
-- [ ] T048 [P] Update integration tests to verify streaming mode delivers multiple batches (buffer not exhausted after 1st batch)
-- [ ] T049 Run all tests with Mode="Polling": `dotnet test` in both IntegrationTests and PlaywrightTests - all should PASS
-- [ ] T050 Run all tests with Mode="Streaming": modify test setup to use Streaming config, all tests should PASS
-- [ ] T051 Verify test execution time: integration tests complete in <5s, Playwright tests in <10s per mode
+- [x] T042 Add validation in `Program.cs` for StreamConfiguration (MessageGenerationIntervalMs 10-10000, ClientFetchIntervalMs 100-30000, BufferCapacity 10-1000)
+- [x] T043 Update `MessagesController.Stream` to handle mode-aware timing: ClientFetchIntervalMs for batch writes, MessageGenerationIntervalMs for empty buffer wait
+- [x] T044 Verify `wwwroot/app.js` config mode handling works correctly: /api/config mode value routes to correct transport (startPolling vs startStreaming)
+- [x] T045 Add test data setup in integration test base class: WebApplicationFactory.WithWebHostBuilder overrides with short intervals (10ms generation, 50ms fetch)
+- [x] T046 Add WebDriverWait equivalent in Playwright tests: increase timeout to 5s for polling mode (slower than streaming)
+- [x] T047 [P] Update integration tests to verify 2+ consecutive poll calls work correctly (buffer resets, new messages added)
+- [x] T048 [P] Update integration tests to verify streaming mode delivers multiple batches (buffer not exhausted after 1st batch)
+- [x] T049 Run all tests with Mode="Polling": `dotnet test` in both IntegrationTests and PlaywrightTests - all should PASS
+- [x] T050 Run all tests with Mode="Streaming": modify test setup to use Streaming config, all tests should PASS
+- [x] T051 Verify test execution time: integration tests complete in <5s, Playwright tests in <10s per mode
 
 **Checkpoint**: US2完成 - ポーリング/ストリーミング両方式が切り替え可能で、各方式で独立して機能
 
@@ -152,7 +152,7 @@
 
 ### Tests for User Story 4
 
-- [ ] T065 [P] [US4] Full integration test suite: test config, poll, stream endpoints with WebApplicationFactory in `tests/MessageStreamApp.IntegrationTests/` (≥6 tests)
+- [x] T065 [P] [US4] Full integration test suite: test config, poll, stream endpoints with WebApplicationFactory in `tests/MessageStreamApp.IntegrationTests/` (≥6 tests)
 - [ ] T066 [P] [US4] Full E2E test suite: polling and streaming modes in real browser in `tests/MessageStreamApp.PlaywrightTests/` (≥4 tests)
 - [ ] T067 [P] [US4] Full JS test suite: NDJSON parsing, DOM append, config switching with Jest in `tests/MessageStreamApp.JsTests/` (≥5 tests)
 
@@ -164,7 +164,7 @@
 - [ ] T071 Add test documentation: each test should have clear AAA (Arrange-Act-Assert) comments and describe what is verified
 - [ ] T072 Add CI-compatible test setup: no manual browser interaction required, all waits use timeout mechanisms (page.WaitForSelector 5s, Task.Delay with margin)
 - [ ] T073 Verify test isolation: each test can run independently, no shared state between tests
-- [ ] T074 Run full test suite: `dotnet test tests/` (all projects) - all tests PASS
+- [x] T074 Run full test suite: `dotnet test tests/` (all projects) - all tests PASS
 - [ ] T075 [P] Run test suite with different modes: set environment to Polling, then Streaming, all tests still PASS
 - [ ] T076 Verify test execution time targets: IntegrationTests <5s, PlaywrightTests <10s per mode, JsTests <5s
 

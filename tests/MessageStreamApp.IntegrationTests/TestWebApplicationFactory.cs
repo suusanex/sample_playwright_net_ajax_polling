@@ -50,4 +50,15 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             [$"{StreamConfiguration.SectionName}:BufferCapacity"] = "100",
         };
     }
+
+    public static IDictionary<string, string?> CreatePollingConfig()
+    {
+        return new Dictionary<string, string?>
+        {
+            [$"{StreamConfiguration.SectionName}:Mode"] = "Polling",
+            [$"{StreamConfiguration.SectionName}:MessageGenerationIntervalMs"] = "200",
+            [$"{StreamConfiguration.SectionName}:ClientFetchIntervalMs"] = "200",
+            [$"{StreamConfiguration.SectionName}:BufferCapacity"] = "100",
+        };
+    }
 }

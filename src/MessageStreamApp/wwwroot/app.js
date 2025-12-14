@@ -61,8 +61,14 @@ function parseNdjsonLines(buffer) {
 async function startPolling(intervalMs) {
     clearPollingTimer();
     const fetchImpl = getFetch();
+    let isPolling = false;
 
-    state.pollingTimer = setInterval(async () => {
+    const pollOnce = async () => {
+        if (isPolling) {
+            return;
+        }
+
+        isPolling = true;
         try {
             const response = await fetchImpl("/api/messages/poll");
             if (!response.ok) {
@@ -74,11 +80,16 @@ async function startPolling(intervalMs) {
             messages.forEach(appendMessage);
         } catch (error) {
             console.error("Polling error", error);
+        } finally {
+            isPolling = false;
         }
-    }, intervalMs);
+    };
+
+    await pollOnce();
+    state.pollingTimer = setInterval(pollOnce, intervalMs);
 }
 
-async function startStreaming() {
+async function startStreaming(config) {
     const fetchImpl = getFetch();
     const response = await fetchImpl("/api/messages/stream");
     if (!response.ok || !response.body) {
@@ -99,6 +110,10 @@ async function startStreaming() {
         const { messages, remainder } = parseNdjsonLines(buffer);
         buffer = remainder;
         messages.forEach(appendMessage);
+
+        if (config && typeof config.clientFetchIntervalMs === "number") {
+            await new Promise(resolve => setTimeout(resolve, config.clientFetchIntervalMs));
+        }
     }
 
     if (buffer.trim()) {
@@ -109,18 +124,25 @@ async function startStreaming() {
 async function init() {
     const fetchImpl = getFetch();
     const configResponse = await fetchImpl("/api/config");
+    const configText = await configResponse.text();
     if (!configResponse.ok) {
         throw new Error(`Config fetch failed: status ${configResponse.status}`);
     }
 
-    const config = await configResponse.json();
+    let config;
+    try {
+        config = JSON.parse(configText);
+    } catch (error) {
+        console.error("init: failed to parse config", error, configText);
+        throw error;
+    }
     const configDisplay = document.getElementById("config-display");
     if (configDisplay) {
         configDisplay.textContent = `Mode: ${config.mode}, Generation: ${config.messageGenerationIntervalMs}ms, Fetch: ${config.clientFetchIntervalMs}ms`;
     }
 
     if (config.mode === "Streaming") {
-        startStreaming().catch(error => console.error("Streaming error", error));
+        startStreaming(config).catch(error => console.error("Streaming error", error));
     } else {
         await startPolling(config.clientFetchIntervalMs);
     }

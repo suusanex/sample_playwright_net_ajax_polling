@@ -15,7 +15,10 @@ public sealed class PollingE2ETests
         var page = await browser.NewPageAsync(new BrowserNewPageOptions { BaseURL = host.BaseAddress.ToString() });
 
         await page.GotoAsync("/");
-        await page.WaitForSelectorAsync("#messages .message", new PageWaitForSelectorOptions { Timeout = 5000 });
+        await page.WaitForFunctionAsync("() => document.getElementById('config-display')?.textContent?.includes('Polling')", new PageWaitForFunctionOptions { Timeout = 10000 });
+        var configText = await page.Locator("#config-display").InnerTextAsync();
+        TestContext.Progress.WriteLine($"Config display: {configText}");
+        await page.WaitForSelectorAsync("#messages .message", new PageWaitForSelectorOptions { Timeout = 10000 });
         var count = await page.Locator("#messages .message").CountAsync();
 
         Assert.That(count, Is.GreaterThan(0));

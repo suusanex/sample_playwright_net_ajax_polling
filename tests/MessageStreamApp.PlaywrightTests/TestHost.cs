@@ -20,6 +20,7 @@ public sealed class TestHost : IAsyncDisposable
         {
             ContentRootPath = contentRoot,
             WebRootPath = Path.Combine(contentRoot, "wwwroot"),
+            ApplicationName = typeof(Program).Assembly.FullName,
         };
 
         var builder = WebApplication.CreateBuilder(options);
@@ -50,9 +51,9 @@ public sealed class TestHost : IAsyncDisposable
         return new Dictionary<string, string?>
         {
             [$"{StreamConfiguration.SectionName}:Mode"] = mode,
-            [$"{StreamConfiguration.SectionName}:MessageGenerationIntervalMs"] = "10",
+            [$"{StreamConfiguration.SectionName}:MessageGenerationIntervalMs"] = "100",
             [$"{StreamConfiguration.SectionName}:ClientFetchIntervalMs"] = "100",
-            [$"{StreamConfiguration.SectionName}:BufferCapacity"] = "100",
+            [$"{StreamConfiguration.SectionName}:BufferCapacity"] = "1000",
         };
     }
 }

@@ -39,4 +39,28 @@ public sealed class PollingApiTests : IntegrationTestBase
         Assert.NotNull(messages);
         Assert.Empty(messages!);
     }
+
+    [Fact]
+    public async Task Poll_InPollingMode_ReturnsNewMessagesOnSubsequentCalls()
+    {
+        await using var factory = new TestWebApplicationFactory(TestWebApplicationFactory.CreatePollingConfig());
+        using var client = factory.CreateClient();
+
+        await Task.Delay(150);
+
+        var first = await client.GetFromJsonAsync<List<Message>>("/api/messages/poll");
+        Assert.NotNull(first);
+        Assert.NotEmpty(first!);
+        var maxFirst = first!.Max(m => m.Id);
+
+        var immediate = await client.GetFromJsonAsync<List<Message>>("/api/messages/poll");
+        Assert.NotNull(immediate);
+        Assert.Empty(immediate!);
+
+        await Task.Delay(150);
+        var third = await client.GetFromJsonAsync<List<Message>>("/api/messages/poll");
+        Assert.NotNull(third);
+        Assert.NotEmpty(third!);
+        Assert.True(third!.Min(m => m.Id) > maxFirst);
+    }
 }

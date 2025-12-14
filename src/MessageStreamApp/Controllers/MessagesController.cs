@@ -49,6 +49,13 @@ public sealed class MessagesController : ControllerBase
     [Produces("application/x-ndjson")]
     public async Task Stream()
     {
+        if (string.Equals(_configuration.Value.Mode, "Polling", StringComparison.OrdinalIgnoreCase))
+        {
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            await Response.WriteAsync("Streaming mode is disabled in current configuration.");
+            return;
+        }
+
         Response.StatusCode = StatusCodes.Status200OK;
         Response.ContentType = "application/x-ndjson";
 

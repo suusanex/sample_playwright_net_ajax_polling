@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MessageStreamApp.Controllers;
 using MessageStreamApp.Models;
 using MessageStreamApp.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,10 +23,26 @@ public static class AppConfiguration
 {
     public static void ConfigureServices(WebApplicationBuilder builder)
     {
-        builder.Services.Configure<StreamConfiguration>(builder.Configuration.GetSection(StreamConfiguration.SectionName));
+        builder.Services.AddOptions<StreamConfiguration>()
+            .Bind(builder.Configuration.GetSection(StreamConfiguration.SectionName))
+            .Validate(
+                config =>
+                {
+                    try
+                    {
+                        config.Validate();
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                },
+                "StreamConfiguration validation failed");
+
         builder.Services.AddSingleton<MessageBuffer>();
         builder.Services.AddHostedService<MessageGeneratorService>();
-        builder.Services.AddControllers().AddApplicationPart(typeof(MessagesController).Assembly);
+        builder.Services.AddControllers();
         builder.Services.Configure<JsonOptions>(options =>
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -38,6 +54,11 @@ public static class AppConfiguration
     public static void ConfigurePipeline(WebApplication app)
     {
         var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("RequestLogging");
+        var config = app.Services.GetRequiredService<IOptions<StreamConfiguration>>().Value;
+        if (config.ClientFetchIntervalMs < config.MessageGenerationIntervalMs)
+        {
+            logger.LogWarning("ClientFetchIntervalMs {Fetch} is less than MessageGenerationIntervalMs {Gen}; buffer may grow", config.ClientFetchIntervalMs, config.MessageGenerationIntervalMs);
+        }
 
         app.Use(async (context, next) =>
         {
