@@ -416,3 +416,14 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Node/JS tooling
+dist/
+build/
+coverage/
+.env.local
+.env.*
+
+# OS artifacts
+.DS_Store
+Thumbs.db

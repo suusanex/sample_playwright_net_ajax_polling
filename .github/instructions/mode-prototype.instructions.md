@@ -35,9 +35,11 @@ The primary goal is to **quickly validate approaches and libraries**, not to bui
 
 ## Tests
 
-- Unit tests are **nice to have but optional**.
-- If a small test makes the prototype more understandable (e.g., one or two happy-path tests), you can add it.
+- Unit tests are **required**.
+- Tests are written to demonstrate that the code works correctly in the normal (happy-path) case.
+- Error cases and exhaustive coverage are **not** a priority.
 - Do **not** spend time on full coverage or complex test scaffolding.
+
 
 ## Style
 

@@ -1,0 +1,13 @@
+{
+  "name": "message-stream-app-jstests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest-environment-jsdom": "^29.7.0",
+    "jest": "^29.7.0",
+    "jsdom": "^24.1.0"
+  }
+}

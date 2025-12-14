@@ -17,12 +17,12 @@
 
 **Purpose**: プロジェクト初期化と基本構成
 
-- [ ] T001 [P] Create project structure: `src/MessageStreamApp/`, `tests/MessageStreamApp.IntegrationTests/`, `tests/MessageStreamApp.PlaywrightTests/`, `tests/MessageStreamApp.JsTests/`
-- [ ] T002 [P] Initialize ASP.NET Core 10 project `MessageStreamApp.csproj` with dependencies (Microsoft.AspNetCore.App, System.Collections.Concurrent, Microsoft.Playwright, Microsoft.AspNetCore.Mvc.Testing, xUnit, NUnit)
-- [ ] T003 [P] Initialize .IntegrationTests project with xUnit, Microsoft.AspNetCore.Mvc.Testing dependencies
-- [ ] T004 [P] Initialize .PlaywrightTests project with Playwright, NUnit dependencies  
-- [ ] T005 [P] Initialize .JsTests project: `package.json`, Jest config, jsdom setup
-- [ ] T006 [P] Create `appsettings.json` configuration schema in `src/MessageStreamApp/appsettings.json` with MessageStream section
+- [x] T001 [P] Create project structure: `src/MessageStreamApp/`, `tests/MessageStreamApp.IntegrationTests/`, `tests/MessageStreamApp.PlaywrightTests/`, `tests/MessageStreamApp.JsTests/`
+- [x] T002 [P] Initialize ASP.NET Core 10 project `MessageStreamApp.csproj` with dependencies (Microsoft.AspNetCore.App, System.Collections.Concurrent, Microsoft.Playwright, Microsoft.AspNetCore.Mvc.Testing, xUnit, NUnit)
+- [x] T003 [P] Initialize .IntegrationTests project with xUnit, Microsoft.AspNetCore.Mvc.Testing dependencies
+- [x] T004 [P] Initialize .PlaywrightTests project with Playwright, NUnit dependencies  
+- [x] T005 [P] Initialize .JsTests project: `package.json`, Jest config, jsdom setup
+- [x] T006 [P] Create `appsettings.json` configuration schema in `src/MessageStreamApp/appsettings.json` with MessageStream section
 - [ ] T007 [P] Create `.gitignore` and `README.md` at repository root
 
 ---
@@ -33,14 +33,14 @@
 
 **⚠️ CRITICAL**: ユーザーストーリー作業開始前に完了必須
 
-- [ ] T008 [P] Create `Message` model in `src/MessageStreamApp/Models/Message.cs` with Id (long), Timestamp (DateTime), Content (string) properties
-- [ ] T009 [P] Create `StreamConfiguration` POCO in `src/MessageStreamApp/Models/StreamConfiguration.cs` with Mode, MessageGenerationIntervalMs, ClientFetchIntervalMs, BufferCapacity properties
-- [ ] T010 [P] Create `MessageBuffer` wrapper class in `src/MessageStreamApp/Services/MessageBuffer.cs` using ConcurrentQueue with Enqueue, DequeueAll, Interlocked counter management
-- [ ] T011 Create `MessageGeneratorService` (BackgroundService) in `src/MessageStreamApp/Services/MessageGeneratorService.cs` with ExecuteAsync implementing periodic message generation with Interlocked.Increment
-- [ ] T012 Create `Program.cs` in `src/MessageStreamApp/` with DI registration, logging setup, StreamConfiguration binding from appsettings
-- [ ] T013 [P] Create `wwwroot/index.html` in `src/MessageStreamApp/wwwroot/` with basic UI structure (config-display, messages divs)
-- [ ] T014 [P] Create `wwwroot/app.js` in `src/MessageStreamApp/wwwroot/` with placeholder functions (init, appendMessage, startPolling, startStreaming)
-- [ ] T015 Create JSON serialization setup in `Program.cs` using System.Text.Json for Message serialization
+- [x] T008 [P] Create `Message` model in `src/MessageStreamApp/Models/Message.cs` with Id (long), Timestamp (DateTime), Content (string) properties
+- [x] T009 [P] Create `StreamConfiguration` POCO in `src/MessageStreamApp/Models/StreamConfiguration.cs` with Mode, MessageGenerationIntervalMs, ClientFetchIntervalMs, BufferCapacity properties
+- [x] T010 [P] Create `MessageBuffer` wrapper class in `src/MessageStreamApp/Services/MessageBuffer.cs` using ConcurrentQueue with Enqueue, DequeueAll, Interlocked counter management
+- [x] T011 Create `MessageGeneratorService` (BackgroundService) in `src/MessageStreamApp/Services/MessageGeneratorService.cs` with ExecuteAsync implementing periodic message generation with Interlocked.Increment
+- [x] T012 Create `Program.cs` in `src/MessageStreamApp/` with DI registration, logging setup, StreamConfiguration binding from appsettings
+- [x] T013 [P] Create `wwwroot/index.html` in `src/MessageStreamApp/wwwroot/` with basic UI structure (config-display, messages divs)
+- [x] T014 [P] Create `wwwroot/app.js` in `src/MessageStreamApp/wwwroot/` with placeholder functions (init, appendMessage, startPolling, startStreaming)
+- [x] T015 Create JSON serialization setup in `Program.cs` using System.Text.Json for Message serialization
 
 **Checkpoint**: 基本インフラ完成 - ユーザーストーリー実装開始可能
 
@@ -54,31 +54,31 @@
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Contract test `/api/config` endpoint returns StreamConfiguration in `tests/MessageStreamApp.IntegrationTests/ConfigApiTests.cs` using WebApplicationFactory
-- [ ] T017 [P] [US1] Contract test `/api/messages/poll` returns Message array (empty and with items) in `tests/MessageStreamApp.IntegrationTests/PollingApiTests.cs`
-- [ ] T018 [P] [US1] Contract test `/api/messages/stream` returns NDJSON stream in `tests/MessageStreamApp.IntegrationTests/StreamingApiTests.cs`
-- [ ] T019 [P] [US1] E2E test polling mode: Playwright opens page and waits for messages in `tests/MessageStreamApp.PlaywrightTests/PollingE2ETests.cs`
-- [ ] T020 [P] [US1] E2E test streaming mode: Playwright opens page and waits for messages in `tests/MessageStreamApp.PlaywrightTests/StreamingE2ETests.cs`
-- [ ] T021 [P] [US1] JS unit test NDJSON parsing: multiple lines split and parsed in `tests/MessageStreamApp.JsTests/app.test.js`
-- [ ] T022 [P] [US1] JS unit test appendMessage: DOM element creation with jsdom in `tests/MessageStreamApp.JsTests/app.test.js`
+- [x] T016 [P] [US1] Contract test `/api/config` endpoint returns StreamConfiguration in `tests/MessageStreamApp.IntegrationTests/ConfigApiTests.cs` using WebApplicationFactory
+- [x] T017 [P] [US1] Contract test `/api/messages/poll` returns Message array (empty and with items) in `tests/MessageStreamApp.IntegrationTests/PollingApiTests.cs`
+- [x] T018 [P] [US1] Contract test `/api/messages/stream` returns NDJSON stream in `tests/MessageStreamApp.IntegrationTests/StreamingApiTests.cs`
+- [x] T019 [P] [US1] E2E test polling mode: Playwright opens page and waits for messages in `tests/MessageStreamApp.PlaywrightTests/PollingE2ETests.cs`
+- [x] T020 [P] [US1] E2E test streaming mode: Playwright opens page and waits for messages in `tests/MessageStreamApp.PlaywrightTests/StreamingE2ETests.cs`
+- [x] T021 [P] [US1] JS unit test NDJSON parsing: multiple lines split and parsed in `tests/MessageStreamApp.JsTests/app.test.js`
+- [x] T022 [P] [US1] JS unit test appendMessage: DOM element creation with jsdom in `tests/MessageStreamApp.JsTests/app.test.js`
 
 ### Implementation for User Story 1
 
-- [ ] T023 Create `ConfigController.cs` in `src/MessageStreamApp/Controllers/ConfigController.cs` with GET /api/config endpoint returning StreamConfiguration
-- [ ] T024 Create `MessagesController.cs` in `src/MessageStreamApp/Controllers/MessagesController.cs` stub with two action methods: Poll and Stream (implementations follow)
-- [ ] T025 Implement Poll action in `MessagesController.cs`: GET /api/messages/poll returns all buffered messages as JSON array using DequeueAll()
-- [ ] T026 Implement Stream action in `MessagesController.cs`: GET /api/messages/stream returns NDJSON with explicit FlushAsync calls, using HttpContext.RequestAborted for cancellation
-- [ ] T027 Implement `appendMessage` function in `wwwroot/app.js`: creates DOM element and appends to #messages div
-- [ ] T028 Implement polling logic in `wwwroot/app.js` startPolling(): setInterval fetch /api/messages/poll, parse array, call appendMessage for each
-- [ ] T029 Implement streaming logic in `wwwroot/app.js` startStreaming(): fetch /api/messages/stream, ReadableStream with TextDecoder, line-by-line JSON.parse, batch append to DOM
-- [ ] T030 Implement config fetch in `wwwroot/app.js` init(): GET /api/config, display mode and interval, conditionally call startPolling or startStreaming
-- [ ] T031 Add error handling and logging in `MessagesController.cs` for null buffer, serialization failures
-- [ ] T032 Add ILogger injection and logging in `MessageGeneratorService.cs` for message generation events
-- [ ] T033 Add request logging in `Program.cs` middleware setup for debugging API calls
+- [x] T023 Create `ConfigController.cs` in `src/MessageStreamApp/Controllers/ConfigController.cs` with GET /api/config endpoint returning StreamConfiguration
+- [x] T024 Create `MessagesController.cs` in `src/MessageStreamApp/Controllers/MessagesController.cs` stub with two action methods: Poll and Stream (implementations follow)
+- [x] T025 Implement Poll action in `MessagesController.cs`: GET /api/messages/poll returns all buffered messages as JSON array using DequeueAll()
+- [x] T026 Implement Stream action in `MessagesController.cs`: GET /api/messages/stream returns NDJSON with explicit FlushAsync calls, using HttpContext.RequestAborted for cancellation
+- [x] T027 Implement `appendMessage` function in `wwwroot/app.js`: creates DOM element and appends to #messages div
+- [x] T028 Implement polling logic in `wwwroot/app.js` startPolling(): setInterval fetch /api/messages/poll, parse array, call appendMessage for each
+- [x] T029 Implement streaming logic in `wwwroot/app.js` startStreaming(): fetch /api/messages/stream, ReadableStream with TextDecoder, line-by-line JSON.parse, batch append to DOM
+- [x] T030 Implement config fetch in `wwwroot/app.js` init(): GET /api/config, display mode and interval, conditionally call startPolling or startStreaming
+- [x] T031 Add error handling and logging in `MessagesController.cs` for null buffer, serialization failures
+- [x] T032 Add ILogger injection and logging in `MessageGeneratorService.cs` for message generation events
+- [x] T033 Add request logging in `Program.cs` middleware setup for debugging API calls
 - [ ] T034 [P] Add console.log debug statements in `wwwroot/app.js` for fetch events, message parsing (optional - for development)
-- [ ] T035 Run IntegrationTests: `dotnet test tests/MessageStreamApp.IntegrationTests` - all tests should PASS
-- [ ] T036 Run PlaywrightTests: `dotnet test tests/MessageStreamApp.PlaywrightTests` with short intervals (10ms generation, 50ms fetch, 5s timeout) - all tests should PASS
-- [ ] T037 Run JsTests: `cd tests/MessageStreamApp.JsTests && npm test` - all tests should PASS
+- [x] T035 Run IntegrationTests: `dotnet test tests/MessageStreamApp.IntegrationTests` - all tests should PASS
+- [x] T036 Run PlaywrightTests: `dotnet test tests/MessageStreamApp.PlaywrightTests` with short intervals (10ms generation, 50ms fetch, 5s timeout) - all tests should PASS
+- [x] T037 Run JsTests: `cd tests/MessageStreamApp.JsTests && npm test` - all tests should PASS
 
 **Checkpoint**: US1完成 - メッセージ配信・表示の基本機能が独立して機能
 
