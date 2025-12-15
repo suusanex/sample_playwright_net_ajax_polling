@@ -8,6 +8,11 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- Playwright テスト実行時に使用するプロファイルを指定 -->
+  <PropertyGroup>
+    <DOTNET_LAUNCH_PROFILE>Playwright</DOTNET_LAUNCH_PROFILE>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
