@@ -7,7 +7,7 @@
 
 ## Summary
 
-ASP.NET Core 10 を使用したメッセージ配信サンプルアプリケーション。サーバーがBackgroundServiceで定期的にメッセージを生成し、ConcurrentQueueでバッファリング。クライアントはHTTPストリーミング（NDJSON）またはポーリングでメッセージを取得し、ブラウザに表示。統合テスト（WebApplicationFactory）、E2Eテスト（Playwright for .NET）、JSテスト（Jest）の3層テスト戦略を実装し、各レイヤーの役割分担を学習する教材プロジェクト。
+ASP.NET Core 10 を使用したメッセージ配信サンプルアプリケーション。サーバーがBackgroundServiceで定期的にメッセージを生成し、`System.Threading.Channels` の `BoundedChannel`（`FullMode.DropOldest`）でバッファリング。クライアントはHTTPストリーミング（NDJSON）またはポーリングでメッセージを取得し、ブラウザに表示。統合テスト（WebApplicationFactory）、E2Eテスト（Playwright for .NET）、JSテスト（Jest）の3層テスト戦略を実装し、各レイヤーの役割分担を学習する教材プロジェクト。
 
 ## Technical Context
 
@@ -23,7 +23,8 @@ ASP.NET Core 10 を使用したメッセージ配信サンプルアプリケー�
   - データ永続化なし（メモリ内完結）
   - 認証・認可・TLS不要（学習用途）
   - メッセージ配信の準リアルタイム性（数秒遅延は許容）  
-**Scale/Scope**: バッファ容量 100件、メモリ消費 10MB以下、学習用途の最小構成
+**Scale/Scope**: バッファ容量 100件、メモリ消費 10MB以下、学習用途の最小構成  
+**Known Issue & Improvement**: 旧来の `ConcurrentQueue<T>` + `Interlocked` による手動排他制御から、`System.Threading.Channels` の `BoundedChannel`（`FullMode.DropOldest`、`ChannelReader`/`ChannelWriter` の分離）へ移行済み。これによりスレッドセーフなバッファリングと容量超過時の自動ドロップが確実になり、処理の堅牢性・シンプルさが向上している。
 
 ## Constitution Check
 
@@ -62,7 +63,7 @@ src/
 │   │   └── MessagesController.cs       # GET /api/messages/poll, /stream
 │   ├── Services/
 │   │   ├── MessageGeneratorService.cs  # BackgroundService（メッセージ生成）
-│   │   └── MessageBuffer.cs            # ConcurrentQueue ラッパー
+│   │   └── MessageBuffer.cs            # System.Threading.Channels (BoundedChannel/DropOldest) ラッパー
 │   ├── Models/
 │   │   ├── Message.cs                  # メッセージエンティティ
 │   │   └── StreamConfiguration.cs      # 設定POCO
@@ -145,44 +146,78 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 
 #### 1.2 バッファ構造
 
-**実装**: `MessageBuffer` クラス（`ConcurrentQueue<Message>` ラッパー）
+**実装**: `MessageBuffer` クラス（`System.Threading.Channels.Channel<Message>` ベース）
 
 **責務**:
 - メッセージの先入先出（FIFO）管理
-- スレッドセーフな `Enqueue` / `DequeueAll`
-- バッファ上限制御（容量超過時は最古メッセージを破棄）
+- 確実なスレッドセーフ操作（`Channel<T>` は言語レベルで保証）
+- バッファ上限制御（容量超過時は最古メッセージを破棄：`FullMode.DropOldest`）
+- 非同期対応（将来拡張用）
 
 **スレッド安全性**:
-- `ConcurrentQueue<T>` はロックフリー（生成側・取得側の並行動作OK）
-- カウント管理は `Interlocked.Increment` / `Interlocked.Decrement`
+- `Channel<T>` は MSDN保証のスレッドセーフ実装
+- `ConcurrentQueue<T>` + `Interlocked` の別排他制御に比べ、より単純で堅牢
+- 同期操作（`TryWrite`, `TryRead`）と非同期操作（`WriteAsync`, `ReadAsync`）の混用も安全
 
 **バッファ上限制御**:
 ```csharp
-public void Enqueue(Message msg)
+// MessageBuffer コンストラクタ
+public MessageBuffer(ILogger<MessageBuffer> logger, IOptions<StreamConfiguration> configuration)
 {
-    if (Interlocked.Increment(ref _count) > _capacity)
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    if (configuration is null)
     {
-        _queue.TryDequeue(out _); // 最古を破棄
-        Interlocked.Decrement(ref _count);
-        _logger.LogWarning("Buffer overflow: oldest message dropped");
+        throw new ArgumentNullException(nameof(configuration));
     }
-    _queue.Enqueue(msg);
-}
-```
 
-**一括払い出し**:
-```csharp
-public List<Message> DequeueAll()
+    configuration.Value.Validate();
+    
+    // BoundedChannel で容量設定、FullMode.DropOldest で最古メッセージを自動破棄
+    var options = new BoundedChannelOptions(configuration.Value.BufferCapacity)
+    {
+        FullMode = BoundedChannelFullMode.DropOldest,
+        SingleReader = true,    // DequeueAll は単一スレッドからのみ呼ばれる
+        SingleWriter = false    // MessageGeneratorService（複数スレッド対応想定）
+    };
+    var channel = Channel.CreateBounded<Message>(options);
+    _writer = channel.Writer;
+    _reader = channel.Reader;
+}
+
+public void Enqueue(Message message)
+{
+    if (message is null)
+    {
+        throw new ArgumentNullException(nameof(message));
+    }
+
+    // TryWrite で同期書き込み（API処理内で使用）
+    if (!_writer.TryWrite(message))
+    {
+        // DropOldest モードのため、ここに到達することは珍しいが、例外的に警告
+        _logger.LogWarning("Buffer write rejected: channel is closed");
+    }
+}
+
+public IReadOnlyList<Message> DequeueAll()
 {
     var result = new List<Message>();
-    while (_queue.TryDequeue(out var msg))
+    
+    // ChannelReader から同期読み取り（非ブロッキング）
+    while (_reader.TryRead(out var message))
     {
-        result.Add(msg);
-        Interlocked.Decrement(ref _count);
+        result.Add(message);
     }
+    
     return result;
 }
 ```
+
+**設計判断**:
+- `BoundedChannelFullMode.DropOldest`: 上限を超えたメッセージは最古を自動破棄
+- `SingleReader = true`: `DequeueAll()` は単一スレッド（ポーリング/ストリーミング API）からのみ呼ばれるため最適化
+- `SingleWriter = false`: 将来の拡張（複数の生成元）を想定
+- スレッド安全性が言語仕様レベルで保証され、手動の排他制御が不要
 
 ---
 
@@ -557,7 +592,7 @@ module.exports = {
 
 **デバッグ支援**:
 - Visual Studio / VS Code のデバッガーでブレークポイント設置
-- バッファの `CurrentCount` をウォッチ
+- Channel の Enqueue/Dequeue ログをウォッチしてバッファ動作を追う
 - ブラウザ開発者ツールのNetworkタブでリクエスト・レスポンス確認
 
 ---
@@ -597,7 +632,7 @@ module.exports = {
 
 **問題**: 生成側と取得側が同時にバッファ操作し、データ競合
 
-**対策**: `ConcurrentQueue` + `Interlocked` で排他制御
+**対策**: `System.Threading.Channels.Channel<T>` を使い、言語仕様でスレッドセーフな Writer/Reader 処理を保証することで手動排他制御を不要にしている（`BoundedChannel` の `FullMode.DropOldest` で容量超過時の破棄も担保）。
 
 #### 5.5 クライアント切断検知
 

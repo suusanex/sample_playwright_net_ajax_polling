@@ -46,15 +46,16 @@
 
 | Property | Type | Validation | Description |
 |----------|------|------------|-------------|
-| `Queue` | `ConcurrentQueue<Message>` | - | メッセージのFIFOキュー |
-| `CurrentCount` | `int` | >= 0 | 現在のバッファ内メッセージ数（`Interlocked`で管理） |
-| `Capacity` | `int` | 固定値（例: 100） | バッファ上限（超過時は古いメッセージを破棄） |
+| `Channel` | `Channel<Message>` (Bounded) | - | メッセージのFIFOキュー（`System.Threading.Channels`） |
+| `Writer` | `ChannelWriter<Message>` | - | メッセージ書き込み用（`Enqueue`操作） |
+| `Reader` | `ChannelReader<Message>` | - | メッセージ読み取り用（`DequeueAll`操作） |
+| `Capacity` | `int` | 固定値（例: 100） | バッファ上限（超過時は自動的に古いメッセージを破棄：`FullMode.DropOldest`） |
 
 #### 操作
 
-- **Enqueue(Message)**: メッセージをキューに追加。`CurrentCount`がキャパシティ超過の場合は破棄（またはDequeue後にEnqueue）
-- **DequeueAll()**: キュー内の全メッセージを一括取得し、空にする
-- **TryPeek()**: 先頭メッセージを取得（削除しない）
+- **Enqueue(Message)**: `Writer.TryWrite()`でメッセージを追加。容量超過時は`FullMode.DropOldest`により自動的に最古メッセージを破棄
+- **DequeueAll()**: `Reader.TryRead()`をループで呼び出し、キュー内の全メッセージを一括取得し、バッファを空にする
+- Channel には直接的なカウント API がないため、バッファサイズ表示が必要な場合は `Enqueue`/`DequeueAll` のログなどで状態を把握する。
 
 #### 状態遷移
 
@@ -65,6 +66,10 @@
 #### 関係
 
 - 含む: 複数の`Message`（0..n）
+
+#### スレッド安全性
+
+`System.Threading.Channels.Channel<T>`はスレッドセーフが言語仕様レベルで保証されています。複数スレッドからの同時アクセスも安全です（`Interlocked`による手動排他制御不要）。
 
 ---
 
@@ -107,9 +112,12 @@
 [BackgroundService]
     ↓ (定期生成: MessageGenerationIntervalMs)
   Message
-    ↓ (Enqueue)
-[MessageBuffer (ConcurrentQueue)]
-    ↓ (DequeueAll or ストリーミング読み出し)
+    ↓ (Enqueue / Writer.TryWrite())
+[MessageBuffer (System.Threading.Channels.Channel<Message>)]
+  - BoundedChannel with FullMode.DropOldest
+  - Capacity: 100 (configurable)
+  - スレッドセーフ保証
+    ↓ (DequeueAll / Reader.TryRead() ループ)
 [API Endpoint]
     ↓ (HTTP Response: JSON or NDJSON)
 [Client JS]

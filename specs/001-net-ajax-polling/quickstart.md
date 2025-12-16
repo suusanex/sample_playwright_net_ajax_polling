@@ -24,7 +24,7 @@ sample_playwright_net_ajax_polling/
 │   │   │   └── MessagesController.cs # GET /api/messages/poll, /stream
 │   │   ├── Services/
 │   │   │   ├── MessageGeneratorService.cs  # BackgroundService
-│   │   │   └── MessageBuffer.cs            # ConcurrentQueue wrapper
+│   │   │   └── MessageBuffer.cs            # System.Threading.Channels (BoundedChannel/DropOldest) wrapper
 │   │   ├── Models/
 │   │   │   ├── Message.cs
 │   │   │   └── StreamConfiguration.cs
@@ -148,7 +148,7 @@ info: MessageStreamApp.Controllers.MessagesController[0]
 
 - Visual Studio / VS Code でデバッグ実行
 - ブレークポイントを `MessagesController` や `MessageGeneratorService` に設置
-- バッファの状態（`CurrentCount`）を監視
+- バッファの状態（Channel の Enqueue/Dequeue ログ）を監視
 
 ### ブラウザ開発者ツール
 

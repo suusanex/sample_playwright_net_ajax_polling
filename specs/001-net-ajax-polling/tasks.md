@@ -35,7 +35,8 @@
 
 - [x] T008 [P] Create `Message` model in `src/MessageStreamApp/Models/Message.cs` with Id (long), Timestamp (DateTime), Content (string) properties
 - [x] T009 [P] Create `StreamConfiguration` POCO in `src/MessageStreamApp/Models/StreamConfiguration.cs` with Mode, MessageGenerationIntervalMs, ClientFetchIntervalMs, BufferCapacity properties
-- [x] T010 [P] Create `MessageBuffer` wrapper class in `src/MessageStreamApp/Services/MessageBuffer.cs` using ConcurrentQueue with Enqueue, DequeueAll, Interlocked counter management
+- [x] T010 [P] Create `MessageBuffer` wrapper class in `src/MessageStreamApp/Services/MessageBuffer.cs` using System.Threading.Channels (BoundedChannel, FullMode.DropOldest) with Enqueue (TryWrite), DequeueAll (TryRead loop), and ChannelWriter/ChannelReader separation. Remove Interlocked counter management. Ensure thread safety and buffer overflow handling via Channel options.
+- [x] T010a [P] Update plan.md, research.md, data-model.md to reflect Channel-based buffer design and rationale (see Plan/Research for details)
 - [x] T011 Create `MessageGeneratorService` (BackgroundService) in `src/MessageStreamApp/Services/MessageGeneratorService.cs` with ExecuteAsync implementing periodic message generation with Interlocked.Increment
 - [x] T012 Create `Program.cs` in `src/MessageStreamApp/` with DI registration, logging setup, StreamConfiguration binding from appsettings
 - [x] T013 [P] Create `wwwroot/index.html` in `src/MessageStreamApp/wwwroot/` with basic UI structure (config-display, messages divs)
@@ -187,7 +188,7 @@
 - [ ] T085 [P] Create example test commands script: `scripts/run-all-tests.ps1` and `scripts/run-all-tests.sh` for CI/local execution
 - [ ] T086 Validate quickstart.md instructions: follow all steps end-to-end, verify app runs and tests pass
 - [ ] T087 Final cross-story integration: run all tests with all 3 intervals (Fast/Normal/Slow) and all 2 modes (Polling/Streaming) - 6 combinations total
-- [ ] T088 [P] Update specification documents: record any assumptions/decisions made during implementation in research.md addendum
+- [ ] T088 [P] Update specification documents: record any assumptions/decisions made during implementation in research.md addendum (including Channel移行の設計判断と理由)
 - [ ] T089 Performance check: monitor memory usage during long test run (Playwright 2+ minutes), verify <50MB delta
 - [ ] T090 [P] Create GitHub Actions CI workflow (if using GitHub): `.github/workflows/dotnet-test.yml` with test execution on push
 - [ ] T091 Final validation: all tasks marked complete, all tests pass, CI pipeline succeeds, quickstart works end-to-end

@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
-using System.Threading;
+using System.Collections.Generic;
+using System.Threading.Channels;
 using MessageStreamApp.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,10 +8,9 @@ namespace MessageStreamApp.Services;
 
 public sealed class MessageBuffer
 {
-    private readonly ConcurrentQueue<Message> _queue = new();
+    private readonly ChannelReader<Message> _reader;
+    private readonly ChannelWriter<Message> _writer;
     private readonly ILogger<MessageBuffer> _logger;
-    private readonly int _capacity;
-    private int _count;
 
     public MessageBuffer(ILogger<MessageBuffer> logger, IOptions<StreamConfiguration> configuration)
     {
@@ -22,10 +21,22 @@ public sealed class MessageBuffer
         }
 
         configuration.Value.Validate();
-        _capacity = configuration.Value.BufferCapacity;
+
+        var options = new BoundedChannelOptions(configuration.Value.BufferCapacity)
+        {
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+            SingleWriter = false
+        };
+
+        var channel = Channel.CreateBounded<Message>(options);
+        _writer = channel.Writer;
+        _reader = channel.Reader;
     }
 
-    public int CurrentCount => Volatile.Read(ref _count);
+    public ChannelWriter<Message> Writer => _writer;
+
+    public ChannelReader<Message> Reader => _reader;
 
     public void Enqueue(Message message)
     {
@@ -34,26 +45,21 @@ public sealed class MessageBuffer
             throw new ArgumentNullException(nameof(message));
         }
 
-        _queue.Enqueue(message);
-        var newCount = Interlocked.Increment(ref _count);
-
-        if (newCount > _capacity && _queue.TryDequeue(out _))
+        if (!_writer.TryWrite(message))
         {
-            Interlocked.Decrement(ref _count);
-            _logger.LogWarning("Buffer overflow: dropped oldest message");
+            _logger.LogWarning("Buffer write rejected: channel is closed");
         }
     }
 
     public IReadOnlyList<Message> DequeueAll()
     {
-        var result = new List<Message>();
+        var messages = new List<Message>();
 
-        while (_queue.TryDequeue(out var message))
+        while (_reader.TryRead(out var message))
         {
-            Interlocked.Decrement(ref _count);
-            result.Add(message);
+            messages.Add(message);
         }
 
-        return result;
+        return messages;
     }
 }

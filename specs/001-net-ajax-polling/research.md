@@ -23,15 +23,33 @@
 
 #### バッファ構造
 
-**Decision**: `System.Collections.Concurrent.ConcurrentQueue<T>` + `Interlocked`でバッファ上限制御
+**Decision**: `System.Threading.Channels.Channel<Message>`（BoundedChannel + FullMode.DropOldest）
 
 **Rationale**:
-- スレッドセーフなキュー（生成側と取得側が並行動作）
-- FIFOでメッセージ順序を保証
-- `Enqueue`/`TryDequeue`が軽量でロックフリー
-- 上限制御は`Interlocked.Increment`でカウント管理し、溢れたメッセージは破棄（学習用途として許容）
+- スレッドセーフが言語仕様レベルで保証（MSDN）
+- 複雑な`Interlocked`による手動排他制御が不要
+- `BoundedChannelOptions`で容量制限とドロップ戦略を宣言的に指定
+- `FullMode.DropOldest`: 容量超過時、最古メッセージを自動破棄（上限制御の複雑さが大幅に削減）
+- 同期操作（`TryWrite`, `TryRead`）と非同期操作（`WriteAsync`, `ReadAsync`）の混用も安全
+- 将来の非同期拡張（BackgroundService内で`ReadAllAsync`使用）にも対応可能
+- .NET 10推奨パターン（現代的な producer-consumer パターン）
+
+**Implementation**:
+- `MessageBuffer` は `Channel.CreateBounded<Message>` に`BoundedChannelOptions`（`FullMode.DropOldest`、`SingleReader=true`、`SingleWriter=false`）を渡してチャネルを作成し、`ChannelWriter<Message>` の `TryWrite` で `Enqueue` を実装している。
+- `DequeueAll` では `ChannelReader<Message>` の `TryRead` をループで呼び出してバッファ内の全メッセージを同期的に取り出すことで、API から一括払い出しを可能にしている。
+
+**改善点（ConcurrentQueue との比較）**:
+| 項目 | ConcurrentQueue + Interlocked | Channel |
+|------|---|---|
+| スレッドセーフ | 手動排他制御が必要 | 言語仕様で保証 |
+| 上限制御 | 複雑（カウント管理 + TryDequeue） | FullMode で宣言的 |
+| 容量超過時の動作 | 手動で最古削除ログ出力 | 自動削除（DropOldest） |
+| ドロップ検知 | 条件式判定（不確実） | デフォルト挙動として明確 |
+| 可読性 | `_queue` + `_count` の状態管理 | Writer/Reader インターフェース |
+| 非同期拡張 | 不適切 | 自然に対応 |
 
 **Alternatives considered**:
+- `ConcurrentQueue<T>` + `Interlocked`: 初期実装。排他制御の複雑さと確実性の課題で改善対象となった
 - `BlockingCollection<T>`: 本用途では待機が不要（メッセージ生成は止めない）
 - `List<T>` + `lock`: 取得時に配列化が必要でオーバーヘッド大
 
@@ -237,7 +255,7 @@
 
 **Problem**: 生成側と取得側が同時にバッファ操作し、データ競合
 
-**Solution**: `ConcurrentQueue`を使用（ロックフリー）。カウント管理は`Interlocked`で排他制御
+**Solution**: `System.Threading.Channels.Channel<T>`を使用（スレッドセーフが言語仕様で保証）。`Interlocked`による手動排他制御は不要。`BoundedChannelOptions`の`SingleReader=true`で最適化可能（本用途：`DequeueAll()`は単一スレッド）
 
 ### 5. クライアント切断検知
 
@@ -249,10 +267,15 @@
 
 ## まとめ
 
-- **サーバー**: BackgroundService + ConcurrentQueue + ASP.NET Core標準API（Fetch/Stream）
+- **サーバー**: BackgroundService + `System.Threading.Channels.Channel<Message>` + ASP.NET Core標準API（Fetch/Stream）
 - **クライアント**: 素のJS（Fetch + setInterval/ReadableStream）
 - **テスト**: WebApplicationFactory（統合）、Playwright（E2E）、Jest（単体）
 - **設定**: appsettings.jsonで方式・間隔を切替
 - **対策**: flush明示、待機ロジック、時間マージン、切断検知を実装
 
-これらの技術選定により、シンプルかつテスタブルな学習用サンプルを実現できます。
+**Channel 導入による改善**:
+- スレッドセーフが言語仕様で保証され、`Interlocked`による複雑な手動排他制御が不要に
+- 上限超過時のメッセージドロップが`FullMode.DropOldest`で宣言的に実装可能
+- 処理がシンプルで堅牢に、メンテナンス性が向上
+
+これらの技術選定により、シンプルかつテスタブルかつ堅牢な学習用サンプルを実現できます。
